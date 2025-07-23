@@ -1,0 +1,15 @@
+[package]
+name = "plist_ffi"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+plist = { version = "1.7" }
+
+# Panicking across FFI is UB
+# Just abort like a C assert would do
+[profile.release]
+panic = "abort"
+[profile.dev]
+panic = "abort"

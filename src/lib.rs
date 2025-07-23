@@ -1,0 +1,151 @@
+// Jackson Coxson
+
+use plist::Value;
+
+pub mod array;
+pub mod creation;
+pub mod dict;
+
+#[allow(non_camel_case_types)]
+pub enum PlistType {
+    PLIST_NONE = -1,
+    PLIST_BOOLEAN,
+    PLIST_INT,
+    PLIST_REAL,
+    PLIST_STRING,
+    PLIST_ARRAY,
+    PLIST_DICT,
+    PLIST_DATE,
+    PLIST_DATA,
+    PLIST_KEY,
+    PLIST_UID,
+    PLIST_NULL,
+}
+
+#[allow(non_camel_case_types)]
+pub enum PlistErr {
+    PLIST_ERR_SUCCESS = 0,
+    PLIST_ERR_INVALID_ARG = -1,
+    PLIST_ERR_FORMAT = -2,
+    PLIST_ERR_PARSE = -3,
+    PLIST_ERR_NO_MEM = -4,
+    PLIST_ERR_IO = -5,
+    PLIST_ERR_UNKNOWN = -255,
+}
+
+#[allow(non_camel_case_types)]
+pub enum PlistFormat {
+    PLIST_FORMAT_NONE = 0,
+    PLIST_FORMAT_XML = 1,
+    PLIST_FORMAT_BINARY = 2,
+    PLIST_FORMAT_JSON = 3,
+    PLIST_FORMAT_OSTEP = 4,
+    PLIST_FORMAT_PRINT = 10,
+    PLIST_FORMAT_LIMD = 11,
+    PLIST_FORMAT_PLUTIL = 12,
+}
+
+#[allow(non_camel_case_types)]
+pub enum PlistWriteOptions {
+    PLIST_OPT_NONE = 0,
+    PLIST_OPT_COMPACT = 1 << 0,
+    PLIST_OPT_PARTIAL_DATA = 1 << 1,
+    PLIST_OPT_NO_NEWLINE = 1 << 2,
+    PLIST_OPT_INDENT = 1 << 3,
+}
+
+#[allow(non_camel_case_types)]
+type plist_t = *mut PlistWrapper;
+#[allow(non_camel_case_types)]
+type plist_array_iter = *mut PlistWrapper;
+#[allow(non_camel_case_types)]
+type plist_dict_iter = *mut PlistWrapper;
+
+pub struct PlistWrapper {
+    node: NodeType,
+    children_wrappers: Vec<*mut PlistWrapper>,
+}
+
+pub enum NodeType {
+    Node(Value),
+    Child {
+        node: *mut Value,
+        parent: *mut Value,
+        index: u32,          // for arrays
+        key: Option<String>, // for dictionaries
+    },
+    Iterator(u32),
+}
+
+impl PlistWrapper {
+    pub(crate) fn borrow_self(&mut self) -> &mut Value {
+        match &mut self.node {
+            NodeType::Node(value) => value,
+            NodeType::Child { node, .. } => unsafe { &mut **node },
+            NodeType::Iterator(_) => panic!("you passed an iterator as a node"),
+        }
+    }
+    pub fn consume(self) -> Option<Value> {
+        match self.node {
+            NodeType::Node(v) => Some(v),
+            NodeType::Child { .. } => None,
+            NodeType::Iterator(_) => panic!("you passed an iterator as a node"),
+        }
+    }
+    pub fn iter_next(&mut self) -> u32 {
+        match &mut self.node {
+            NodeType::Iterator(i) => {
+                let to_return = *i;
+                *i += 1;
+                to_return
+            }
+            _ => panic!("you passed a node as an interator"),
+        }
+    }
+    pub fn new_node(v: Value) -> Self {
+        Self {
+            node: NodeType::Node(v),
+            children_wrappers: Vec::new(),
+        }
+    }
+    pub fn new_iterator(i: u32) -> Self {
+        Self {
+            node: NodeType::Iterator(i),
+            children_wrappers: Vec::new(),
+        }
+    }
+    pub fn new_dict_child(node: &mut Value, parent: &mut Value, key: String) -> Self {
+        Self {
+            node: NodeType::Child {
+                node: node as *mut Value,
+                parent: parent as *mut Value,
+                index: u32::MAX,
+                key: Some(key),
+            },
+            children_wrappers: Vec::new(),
+        }
+    }
+    pub fn into_ptr(self) -> plist_t {
+        let p = Box::new(self);
+        Box::into_raw(p)
+    }
+}
+
+impl From<Value> for PlistWrapper {
+    fn from(value: Value) -> Self {
+        Self::new_node(value)
+    }
+}
+
+impl Clone for PlistWrapper {
+    fn clone(&self) -> Self {
+        match &self.node {
+            NodeType::Node(value) => PlistWrapper::new_node(value.clone()),
+            NodeType::Child { node, .. } => unsafe {
+                let cloned = (**node).clone();
+                PlistWrapper::new_node(cloned)
+            },
+            NodeType::Iterator(i) => PlistWrapper::new_iterator(*i),
+        }
+    }
+}
