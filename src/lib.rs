@@ -23,6 +23,7 @@ pub enum PlistType {
 }
 
 #[allow(non_camel_case_types)]
+#[repr(C)]
 pub enum PlistErr {
     PLIST_ERR_SUCCESS = 0,
     PLIST_ERR_INVALID_ARG = -1,
