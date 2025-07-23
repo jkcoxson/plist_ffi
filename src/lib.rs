@@ -5,8 +5,11 @@ use plist::Value;
 pub mod array;
 pub mod creation;
 pub mod dict;
+pub mod getters;
+pub mod setters;
 
 #[allow(non_camel_case_types)]
+#[repr(C)]
 pub enum PlistType {
     PLIST_NONE = -1,
     PLIST_BOOLEAN,

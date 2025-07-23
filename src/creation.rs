@@ -1,7 +1,7 @@
 // Jackson Coxson
 
 use plist::{Dictionary, Uid, Value};
-use std::ffi::{CStr, c_char};
+use std::ffi::{CStr, CString, c_char};
 
 use crate::plist_t;
 
@@ -110,4 +110,11 @@ pub unsafe extern "C" fn plist_copy(node: plist_t) -> plist_t {
     let p = unsafe { &*node };
     let p = Box::new(p.clone());
     Box::into_raw(p)
+}
+
+/// # Safety
+/// Needs to be allocated by this library
+/// I sure hope nothing bad happens
+pub unsafe extern "C" fn plist_mem_free(data: *mut c_char) {
+    let _ = unsafe { CString::from_raw(data) };
 }
