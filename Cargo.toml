@@ -6,6 +6,16 @@ edition = "2024"
 
 [dependencies]
 plist = { version = "1.7" }
+serde_json = { version = "1" }
+libc = { version = "0.2" }
+
+[build-dependencies]
+cbindgen = { version = "0.29" }
+cc = { version = "1.2" }
+
+[features]
+danger = []
+default = ["danger"]
 
 # Panicking across FFI is UB
 # Just abort like a C assert would do

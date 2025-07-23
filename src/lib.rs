@@ -6,7 +6,9 @@ pub mod array;
 pub mod creation;
 pub mod dict;
 pub mod getters;
+pub mod import;
 pub mod setters;
+pub mod utils;
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -27,6 +29,7 @@ pub enum PlistType {
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
+#[derive(PartialEq)]
 pub enum PlistErr {
     PLIST_ERR_SUCCESS = 0,
     PLIST_ERR_INVALID_ARG = -1,
@@ -38,6 +41,7 @@ pub enum PlistErr {
 }
 
 #[allow(non_camel_case_types)]
+#[repr(C)]
 pub enum PlistFormat {
     PLIST_FORMAT_NONE = 0,
     PLIST_FORMAT_XML = 1,
@@ -49,14 +53,12 @@ pub enum PlistFormat {
     PLIST_FORMAT_PLUTIL = 12,
 }
 
-#[allow(non_camel_case_types)]
-pub enum PlistWriteOptions {
-    PLIST_OPT_NONE = 0,
-    PLIST_OPT_COMPACT = 1 << 0,
-    PLIST_OPT_PARTIAL_DATA = 1 << 1,
-    PLIST_OPT_NO_NEWLINE = 1 << 2,
-    PLIST_OPT_INDENT = 1 << 3,
-}
+pub type PlistWriteOptions = u32;
+pub const PLIST_OPT_NONE: PlistWriteOptions = 0;
+pub const PLIST_OPT_COMPACT: PlistWriteOptions = 1 << 0;
+pub const PLIST_OPT_PARTIAL_DATA: PlistWriteOptions = 1 << 1;
+pub const PLIST_OPT_NO_NEWLINE: PlistWriteOptions = 1 << 2;
+pub const PLIST_OPT_INDENT: PlistWriteOptions = 1 << 3;
 
 #[allow(non_camel_case_types)]
 type plist_t = *mut PlistWrapper;

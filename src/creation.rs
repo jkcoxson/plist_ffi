@@ -99,7 +99,10 @@ pub extern "C" fn plist_new_null() -> plist_t {
 pub unsafe extern "C" fn plist_free(plist: plist_t) {
     let parent = unsafe { Box::from_raw(plist) };
     for c in parent.children_wrappers {
-        let _ = unsafe { Box::from_raw(c) };
+        unsafe {
+            // recurse through the tree
+            plist_free(c);
+        }
     }
 }
 

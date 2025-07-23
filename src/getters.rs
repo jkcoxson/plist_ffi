@@ -159,7 +159,7 @@ pub unsafe extern "C" fn plist_get_data_val(node: plist_t, val: *mut *const u8, 
             *length = (boxed.len() - 1) as u64;
         }
 
-        // Prevent Rust from freeing it — caller must free
+        // Prevent Rust from freeing it - caller must free
         std::mem::forget(boxed);
 
         // Plug ears for explosion
