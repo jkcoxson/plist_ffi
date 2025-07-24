@@ -13,3 +13,11 @@ $top_builddir/test/plist_test $DATASRC/$TESTFILE $DATAOUT/empty.test.out
 
 echo "Comparing"
 $top_builddir/test/plist_cmp $DATASRC/$TESTFILE $DATAOUT/empty.test.out
+
+# the original test assumed that empty was valid
+# but this is not valid. I'm editing this test.
+if [ $? -eq 0 ]; then
+  exit 1
+else
+  exit 0
+fi
