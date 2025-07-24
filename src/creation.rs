@@ -97,6 +97,9 @@ pub extern "C" fn plist_new_null() -> plist_t {
 /// Needs to be allocated by this library
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn plist_free(plist: plist_t) {
+    if plist.is_null() {
+        return;
+    }
     let parent = unsafe { Box::from_raw(plist) };
     for c in parent.children_wrappers {
         unsafe {
