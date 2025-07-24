@@ -3,6 +3,8 @@
 use std::env;
 
 fn main() {
+    println!("cargo::rerun-if-changed=src/");
+    println!("cargo::rerun-if-changed=plist.h");
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
     cbindgen::Builder::new()

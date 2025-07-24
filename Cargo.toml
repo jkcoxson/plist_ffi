@@ -23,3 +23,6 @@ default = ["danger"]
 panic = "abort"
 [profile.dev]
 panic = "abort"
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
