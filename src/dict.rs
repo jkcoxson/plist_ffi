@@ -7,7 +7,7 @@ use std::{
 
 use plist::Value;
 
-use crate::{NodeType, PlistErr, PlistWrapper, plist_dict_iter, plist_t};
+use crate::{NodeType, PlistWrapper, plist_dict_iter, plist_err_t, plist_t};
 
 /// # Safety
 /// Don't pass a bad plist >:(
@@ -377,7 +377,7 @@ pub unsafe extern "C" fn plist_dict_copy_item(
     source_plist: plist_t,
     key: *const c_char,
     alt_source_key: *const c_char,
-) -> PlistErr {
+) -> plist_err_t {
     let target_plist = unsafe { &mut *target_plist }.borrow_self();
     let source_plist = unsafe { &mut *source_plist }.borrow_self();
     let insert_key = unsafe { CStr::from_ptr(key) }.to_str().unwrap();
@@ -393,12 +393,12 @@ pub unsafe extern "C" fn plist_dict_copy_item(
         if let Some(to_copy) = d_source.get(lookup_key) {
             let to_copy = to_copy.clone();
             d_target.insert(insert_key.to_string(), to_copy);
-            PlistErr::PLIST_ERR_SUCCESS
+            plist_err_t::PLIST_ERR_SUCCESS
         } else {
-            PlistErr::PLIST_ERR_INVALID_ARG
+            plist_err_t::PLIST_ERR_INVALID_ARG
         }
     } else {
-        PlistErr::PLIST_ERR_INVALID_ARG
+        plist_err_t::PLIST_ERR_INVALID_ARG
     }
 }
 
@@ -410,7 +410,7 @@ pub unsafe extern "C" fn plist_dict_copy_bool(
     source_plist: plist_t,
     key: *const c_char,
     alt_source_key: *const c_char,
-) -> PlistErr {
+) -> plist_err_t {
     let lookup_key = if alt_source_key.is_null() {
         key
     } else {
@@ -427,12 +427,12 @@ pub unsafe extern "C" fn plist_dict_copy_bool(
             Some(b) => {
                 let p = Value::Boolean(b);
                 d_target.insert(insert_key.to_string(), p);
-                PlistErr::PLIST_ERR_SUCCESS
+                plist_err_t::PLIST_ERR_SUCCESS
             }
-            None => PlistErr::PLIST_ERR_INVALID_ARG,
+            None => plist_err_t::PLIST_ERR_INVALID_ARG,
         }
     } else {
-        PlistErr::PLIST_ERR_INVALID_ARG
+        plist_err_t::PLIST_ERR_INVALID_ARG
     }
 }
 
@@ -444,7 +444,7 @@ pub unsafe extern "C" fn plist_dict_copy_int(
     source_plist: plist_t,
     key: *const c_char,
     alt_source_key: *const c_char,
-) -> PlistErr {
+) -> plist_err_t {
     let lookup_key = if alt_source_key.is_null() {
         key
     } else {
@@ -461,12 +461,12 @@ pub unsafe extern "C" fn plist_dict_copy_int(
             Some(i) => {
                 let p = Value::Integer(i.into());
                 d_target.insert(insert_key.to_string(), p);
-                PlistErr::PLIST_ERR_SUCCESS
+                plist_err_t::PLIST_ERR_SUCCESS
             }
-            None => PlistErr::PLIST_ERR_INVALID_ARG,
+            None => plist_err_t::PLIST_ERR_INVALID_ARG,
         }
     } else {
-        PlistErr::PLIST_ERR_INVALID_ARG
+        plist_err_t::PLIST_ERR_INVALID_ARG
     }
 }
 
@@ -478,7 +478,7 @@ pub unsafe extern "C" fn plist_dict_copy_uint(
     source_plist: plist_t,
     key: *const c_char,
     alt_source_key: *const c_char,
-) -> PlistErr {
+) -> plist_err_t {
     let lookup_key = if alt_source_key.is_null() {
         key
     } else {
@@ -495,12 +495,12 @@ pub unsafe extern "C" fn plist_dict_copy_uint(
             Some(i) => {
                 let p = Value::Integer(i.into());
                 d_target.insert(insert_key.to_string(), p);
-                PlistErr::PLIST_ERR_SUCCESS
+                plist_err_t::PLIST_ERR_SUCCESS
             }
-            None => PlistErr::PLIST_ERR_INVALID_ARG,
+            None => plist_err_t::PLIST_ERR_INVALID_ARG,
         }
     } else {
-        PlistErr::PLIST_ERR_INVALID_ARG
+        plist_err_t::PLIST_ERR_INVALID_ARG
     }
 }
 
@@ -512,7 +512,7 @@ pub unsafe extern "C" fn plist_dict_copy_data(
     source_plist: plist_t,
     key: *const c_char,
     alt_source_key: *const c_char,
-) -> PlistErr {
+) -> plist_err_t {
     let lookup_key = if alt_source_key.is_null() {
         key
     } else {
@@ -528,12 +528,12 @@ pub unsafe extern "C" fn plist_dict_copy_data(
         if let Some(Value::Data(d)) = d_source.get(lookup_key) {
             let d = Value::Data(d.clone());
             d_target.insert(insert_key.to_string(), d);
-            PlistErr::PLIST_ERR_SUCCESS
+            plist_err_t::PLIST_ERR_SUCCESS
         } else {
-            PlistErr::PLIST_ERR_INVALID_ARG
+            plist_err_t::PLIST_ERR_INVALID_ARG
         }
     } else {
-        PlistErr::PLIST_ERR_INVALID_ARG
+        plist_err_t::PLIST_ERR_INVALID_ARG
     }
 }
 
@@ -545,7 +545,7 @@ pub unsafe extern "C" fn plist_dict_copy_string(
     source_plist: plist_t,
     key: *const c_char,
     alt_source_key: *const c_char,
-) -> PlistErr {
+) -> plist_err_t {
     let lookup_key = if alt_source_key.is_null() {
         key
     } else {
@@ -561,11 +561,11 @@ pub unsafe extern "C" fn plist_dict_copy_string(
         if let Some(Value::String(s)) = d_source.get(lookup_key) {
             let d = Value::String(s.clone());
             d_target.insert(insert_key.to_string(), d);
-            PlistErr::PLIST_ERR_SUCCESS
+            plist_err_t::PLIST_ERR_SUCCESS
         } else {
-            PlistErr::PLIST_ERR_INVALID_ARG
+            plist_err_t::PLIST_ERR_INVALID_ARG
         }
     } else {
-        PlistErr::PLIST_ERR_INVALID_ARG
+        plist_err_t::PLIST_ERR_INVALID_ARG
     }
 }

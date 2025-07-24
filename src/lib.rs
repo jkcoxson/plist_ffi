@@ -66,6 +66,8 @@ type plist_t = *mut PlistWrapper;
 type plist_array_iter = *mut PlistWrapper;
 #[allow(non_camel_case_types)]
 type plist_dict_iter = *mut PlistWrapper;
+#[allow(non_camel_case_types)]
+type plist_err_t = PlistErr;
 
 pub struct PlistWrapper {
     node: NodeType,

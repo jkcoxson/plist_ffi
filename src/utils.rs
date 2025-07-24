@@ -384,6 +384,7 @@ pub extern "C" fn plist_set_debug(_debug: i8) {
     // no
 }
 
+#[unsafe(no_mangle)]
 pub extern "C" fn libplist_version() -> *const c_char {
     CString::new("2.0").unwrap().into_raw()
 }

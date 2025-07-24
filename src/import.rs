@@ -4,7 +4,7 @@ use std::ffi::{CStr, c_char, c_void};
 
 use plist::Value;
 
-use crate::{PLIST_OPT_INDENT, PlistErr, PlistFormat, PlistWrapper, PlistWriteOptions, plist_t};
+use crate::{PLIST_OPT_INDENT, PlistFormat, PlistWrapper, PlistWriteOptions, plist_err_t, plist_t};
 
 /// # Safety
 /// Don't pass a bad plist >:(
@@ -13,7 +13,7 @@ pub unsafe extern "C" fn plist_to_xml(
     node: plist_t,
     plist_xml: *mut *mut c_char,
     length: *mut u32,
-) -> PlistErr {
+) -> plist_err_t {
     let node = unsafe { &mut *node }.borrow_self();
 
     let buf = Vec::new();
@@ -33,7 +33,7 @@ pub unsafe extern "C" fn plist_to_xml(
 
     // Prevent Rust from freeing it — caller must free
     std::mem::forget(boxed);
-    PlistErr::PLIST_ERR_SUCCESS
+    plist_err_t::PLIST_ERR_SUCCESS
 }
 
 /// # Safety
@@ -43,7 +43,7 @@ pub unsafe extern "C" fn plist_to_bin(
     node: plist_t,
     plist_bin: *mut *mut c_char,
     length: *mut u32,
-) -> PlistErr {
+) -> plist_err_t {
     let node = unsafe { &mut *node }.borrow_self();
 
     let buf = Vec::new();
@@ -63,7 +63,7 @@ pub unsafe extern "C" fn plist_to_bin(
 
     // Prevent Rust from freeing it - caller must free
     std::mem::forget(boxed);
-    PlistErr::PLIST_ERR_SUCCESS
+    plist_err_t::PLIST_ERR_SUCCESS
 }
 
 /// # Safety
@@ -74,7 +74,7 @@ pub unsafe extern "C" fn plist_to_json(
     plist_json: *mut *mut c_char,
     length: *mut u32,
     prettify: i32,
-) -> PlistErr {
+) -> plist_err_t {
     let node = unsafe { &mut *node }.borrow_self();
 
     let mut s = if prettify > 0 {
@@ -99,7 +99,7 @@ pub unsafe extern "C" fn plist_to_json(
 
     // Prevent Rust from freeing it - caller must free
     std::mem::forget(boxed);
-    PlistErr::PLIST_ERR_SUCCESS
+    plist_err_t::PLIST_ERR_SUCCESS
 }
 
 /// There is hardly any information on this format. Hopefully this isn't used anywhere.
@@ -111,7 +111,7 @@ pub unsafe extern "C" fn plist_to_openstep(
     _plist_json: *mut *mut c_char,
     _length: *mut u32,
     _prettify: i32,
-) {
+) -> plist_err_t {
     unimplemented!()
 }
 
@@ -122,14 +122,14 @@ pub unsafe extern "C" fn plist_from_xml(
     plist_xml: *const c_char,
     length: u32,
     plist: *mut plist_t,
-) -> PlistErr {
+) -> plist_err_t {
     let data = unsafe { std::slice::from_raw_parts(plist_xml as *const u8, length as usize) };
     if let Ok(data) = plist::from_bytes(data) {
         let p = PlistWrapper::new_node(data).into_ptr();
         unsafe { *plist = p };
-        PlistErr::PLIST_ERR_SUCCESS
+        plist_err_t::PLIST_ERR_SUCCESS
     } else {
-        PlistErr::PLIST_ERR_PARSE
+        plist_err_t::PLIST_ERR_PARSE
     }
 }
 
@@ -140,14 +140,14 @@ pub unsafe extern "C" fn plist_from_bin(
     plist_bin: *const c_char,
     length: u32,
     plist: *mut plist_t,
-) -> PlistErr {
+) -> plist_err_t {
     let data = unsafe { std::slice::from_raw_parts(plist_bin as *const u8, length as usize) };
     if let Ok(data) = plist::from_bytes(data) {
         let p = PlistWrapper::new_node(data).into_ptr();
         unsafe { *plist = p };
-        PlistErr::PLIST_ERR_SUCCESS
+        plist_err_t::PLIST_ERR_SUCCESS
     } else {
-        PlistErr::PLIST_ERR_PARSE
+        plist_err_t::PLIST_ERR_PARSE
     }
 }
 
@@ -158,14 +158,14 @@ pub unsafe extern "C" fn plist_from_json(
     plist_json: *const c_char,
     length: u32,
     plist: *mut plist_t,
-) -> PlistErr {
+) -> plist_err_t {
     let data = unsafe { std::slice::from_raw_parts(plist_json as *const u8, length as usize) };
     if let Ok(data) = serde_json::from_slice(data) {
         let p = PlistWrapper::new_node(data).into_ptr();
         unsafe { *plist = p };
-        PlistErr::PLIST_ERR_SUCCESS
+        plist_err_t::PLIST_ERR_SUCCESS
     } else {
-        PlistErr::PLIST_ERR_PARSE
+        plist_err_t::PLIST_ERR_PARSE
     }
 }
 
@@ -177,21 +177,21 @@ pub unsafe extern "C" fn plist_from_memory(
     length: u32,
     plist: *mut plist_t,
     plist_format: *mut PlistFormat,
-) -> PlistErr {
+) -> plist_err_t {
     unsafe {
-        if plist_from_xml(plist_data, length, plist) == PlistErr::PLIST_ERR_SUCCESS {
+        if plist_from_xml(plist_data, length, plist) == plist_err_t::PLIST_ERR_SUCCESS {
             if !plist_format.is_null() {
                 *plist_format = PlistFormat::PLIST_FORMAT_XML; // this can also be true for binary
             }
-            return PlistErr::PLIST_ERR_SUCCESS;
+            return plist_err_t::PLIST_ERR_SUCCESS;
         }
-        if plist_from_json(plist_data, length, plist) == PlistErr::PLIST_ERR_SUCCESS {
+        if plist_from_json(plist_data, length, plist) == plist_err_t::PLIST_ERR_SUCCESS {
             if !plist_format.is_null() {
                 *plist_format = PlistFormat::PLIST_FORMAT_JSON;
             }
-            return PlistErr::PLIST_ERR_SUCCESS;
+            return plist_err_t::PLIST_ERR_SUCCESS;
         }
-        PlistErr::PLIST_ERR_PARSE
+        plist_err_t::PLIST_ERR_PARSE
     }
 }
 
@@ -202,11 +202,11 @@ pub unsafe extern "C" fn plist_read_from_file(
     filename: *const c_char,
     plist: *mut plist_t,
     plist_format: *mut PlistFormat,
-) -> PlistErr {
+) -> plist_err_t {
     let filename = unsafe { CStr::from_ptr(filename) }.to_str().unwrap();
     let f = match std::fs::read(filename) {
         Ok(f) => f,
-        Err(_) => return PlistErr::PLIST_ERR_IO,
+        Err(_) => return plist_err_t::PLIST_ERR_IO,
     };
 
     unsafe {
@@ -228,7 +228,7 @@ pub unsafe extern "C" fn plist_write_to_string(
     length: *mut u32,
     format: PlistFormat,
     options: PlistWriteOptions,
-) -> PlistErr {
+) -> plist_err_t {
     let node = unsafe { &mut *plist }.borrow_self();
 
     let mut data = match format {
@@ -251,7 +251,7 @@ pub unsafe extern "C" fn plist_write_to_string(
                 serde_json::to_vec(node).unwrap()
             }
         }
-        _ => return PlistErr::PLIST_ERR_INVALID_ARG,
+        _ => return plist_err_t::PLIST_ERR_INVALID_ARG,
     };
     data.push(0);
     let mut boxed = data.into_boxed_slice();
@@ -266,7 +266,7 @@ pub unsafe extern "C" fn plist_write_to_string(
 
     // Prevent Rust from freeing it - caller must free
     std::mem::forget(boxed);
-    PlistErr::PLIST_ERR_SUCCESS
+    plist_err_t::PLIST_ERR_SUCCESS
 }
 
 /// # Safety
@@ -277,9 +277,9 @@ pub unsafe extern "C" fn plist_write_to_stream(
     stream: *mut libc::FILE,
     format: PlistFormat,
     options: PlistWriteOptions,
-) -> PlistErr {
+) -> plist_err_t {
     if plist.is_null() || stream.is_null() {
-        return PlistErr::PLIST_ERR_INVALID_ARG;
+        return plist_err_t::PLIST_ERR_INVALID_ARG;
     }
 
     let wrapper = unsafe { &mut *plist };
@@ -298,19 +298,19 @@ pub unsafe extern "C" fn plist_write_to_stream(
         }
         PlistFormat::PLIST_FORMAT_XML => plist::to_writer_xml(&mut buf, value),
         PlistFormat::PLIST_FORMAT_BINARY => plist::to_writer_binary(&mut buf, value),
-        _ => return PlistErr::PLIST_ERR_INVALID_ARG,
+        _ => return plist_err_t::PLIST_ERR_INVALID_ARG,
     };
 
     if result.is_err() {
-        return PlistErr::PLIST_ERR_INVALID_ARG;
+        return plist_err_t::PLIST_ERR_INVALID_ARG;
     }
 
     if unsafe { !write_to_stream(stream, &buf) } {
-        return PlistErr::PLIST_ERR_INVALID_ARG;
+        return plist_err_t::PLIST_ERR_INVALID_ARG;
     }
 
     unsafe { libc::fflush(stream) };
-    PlistErr::PLIST_ERR_SUCCESS
+    plist_err_t::PLIST_ERR_SUCCESS
 }
 
 unsafe fn write_to_stream(stream: *mut libc::FILE, buf: &[u8]) -> bool {
@@ -326,7 +326,7 @@ pub unsafe extern "C" fn plist_write_to_file(
     filename: *const c_char,
     format: PlistFormat,
     options: PlistWriteOptions,
-) -> PlistErr {
+) -> plist_err_t {
     let value = unsafe { &mut *plist }.borrow_self();
     let filename = unsafe { CStr::from_ptr(filename) }.to_str().unwrap();
     let mut buf = Vec::new();
@@ -342,16 +342,16 @@ pub unsafe extern "C" fn plist_write_to_file(
         }
         PlistFormat::PLIST_FORMAT_XML => plist::to_writer_xml(&mut buf, value),
         PlistFormat::PLIST_FORMAT_BINARY => plist::to_writer_binary(&mut buf, value),
-        _ => return PlistErr::PLIST_ERR_INVALID_ARG,
+        _ => return plist_err_t::PLIST_ERR_INVALID_ARG,
     };
     if result.is_err() {
-        return PlistErr::PLIST_ERR_INVALID_ARG;
+        return plist_err_t::PLIST_ERR_INVALID_ARG;
     }
 
     if std::fs::write(filename, buf).is_ok() {
-        PlistErr::PLIST_ERR_SUCCESS
+        plist_err_t::PLIST_ERR_SUCCESS
     } else {
-        PlistErr::PLIST_ERR_IO
+        plist_err_t::PLIST_ERR_IO
     }
 }
 
