@@ -28,7 +28,7 @@ test:
     @echo "Running .test scripts..."
     cd test && for f in *.test; do \
         echo "--- Running $f ---"; \
-        env top_srcdir=.. top_builddir=.. bash ./$f || echo "❌ Failed: $f"; \
+        env RUST_BACKTRACE=1 top_srcdir=.. top_builddir=.. bash ./$f || echo "❌ Failed: $f"; \
     done
 
 # Clean build output

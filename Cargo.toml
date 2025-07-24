@@ -17,12 +17,5 @@ cc = { version = "1.2" }
 danger = []
 default = ["danger"]
 
-# Panicking across FFI is UB
-# Just abort like a C assert would do
-[profile.release]
-panic = "abort"
-[profile.dev]
-panic = "abort"
-
 [lib]
 crate-type = ["staticlib", "cdylib"]
