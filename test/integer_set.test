@@ -2,4 +2,4 @@
 
 set -e
 
-$top_builddir/test/integer_set_test
+$top_builddir/test/integer_set
