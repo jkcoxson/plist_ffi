@@ -101,10 +101,10 @@ pub unsafe extern "C" fn plist_free(plist: plist_t) {
         return;
     }
     let parent = unsafe { Box::from_raw(plist) };
-    for c in parent.children_wrappers {
+    for c in &parent.children_wrappers {
         unsafe {
             // recurse through the tree
-            plist_free(c);
+            plist_free(*c);
         }
     }
 }

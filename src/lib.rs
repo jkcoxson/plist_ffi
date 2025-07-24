@@ -85,22 +85,29 @@ pub enum NodeType {
     Iterator(u32),
 }
 
+/// An FFI, libplist, compatible wrapper for plist's Value.
 impl PlistWrapper {
-    pub(crate) fn borrow_self(&mut self) -> &mut Value {
+    /// Gets a reference to the Value from the wrapper
+    /// Note that you cannot retrieve the actual value,
+    /// as the value might be a child of another wrapper.
+    pub fn borrow_self(&mut self) -> &mut Value {
         match &mut self.node {
             NodeType::Node(value) => value,
             NodeType::Child { node, .. } => unsafe { &mut **node },
             NodeType::Iterator(_) => panic!("you passed an iterator as a node"),
         }
     }
-    pub fn consume(self) -> Option<Value> {
-        match self.node {
+    pub(crate) fn consume(mut self) -> Option<Value> {
+        // Put something harmless back so Drop can still run.
+        let node = std::mem::replace(&mut self.node, NodeType::Iterator(0));
+
+        match node {
             NodeType::Node(v) => Some(v),
             NodeType::Child { .. } => None,
             NodeType::Iterator(_) => panic!("you passed an iterator as a node"),
         }
     }
-    pub fn iter_next(&mut self) -> u32 {
+    pub(crate) fn iter_next(&mut self) -> u32 {
         match &mut self.node {
             NodeType::Iterator(i) => {
                 let to_return = *i;
@@ -116,24 +123,13 @@ impl PlistWrapper {
             children_wrappers: Vec::new(),
         }
     }
-    pub fn new_iterator(i: u32) -> Self {
+    pub(crate) fn new_iterator(i: u32) -> Self {
         Self {
             node: NodeType::Iterator(i),
             children_wrappers: Vec::new(),
         }
     }
-    pub fn new_dict_child(node: &mut Value, parent: &mut Value, key: String) -> Self {
-        Self {
-            node: NodeType::Child {
-                node: node as *mut Value,
-                parent: parent as *mut Value,
-                index: u32::MAX,
-                key: Some(key),
-            },
-            children_wrappers: Vec::new(),
-        }
-    }
-    pub fn into_ptr(self) -> plist_t {
+    pub(crate) fn into_ptr(self) -> plist_t {
         let p = Box::new(self);
         Box::into_raw(p)
     }
@@ -154,6 +150,16 @@ impl Clone for PlistWrapper {
                 PlistWrapper::new_node(cloned)
             },
             NodeType::Iterator(i) => PlistWrapper::new_iterator(*i),
+        }
+    }
+}
+
+impl Drop for PlistWrapper {
+    fn drop(&mut self) {
+        for c in &self.children_wrappers {
+            unsafe {
+                creation::plist_free(*c);
+            }
         }
     }
 }
