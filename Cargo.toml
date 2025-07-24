@@ -2,6 +2,12 @@
 name = "plist_ffi"
 version = "0.1.0"
 edition = "2024"
+description = "C FFI for the amazing plist crate, compatible with libplist"
+authors = ["Jackson Coxson"]
+license = "MIT"
+documentation = "https://docs.rs/plist_ffi"
+repository = "https://github.com/jkcoxson/plist_ffi"
+keywords = ["plist", "apple"]
 
 
 [dependencies]
@@ -19,3 +25,6 @@ default = ["danger"]
 
 [lib]
 crate-type = ["staticlib", "cdylib"]
+
+[package.metadata.docs.rs]
+all-features = true
